@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facial Recognition Attendance Survey — University Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12233F;
+    --ink-soft:#3C4A5E;
+    --paper:#F1F3F1;
+    --paper-raised:#FFFFFF;
+    --accent:#2FB6A6;
+    --accent-soft:#DEF0EE;
+    --alert:#C1443B;
+    --line:#D8DAD3;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:500;
+  }
+  h1,h2{font-family:'Fraunces',serif;margin:0;color:var(--ink);}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    padding:64px 24px 56px;
+    overflow:hidden;
+    background:var(--ink);
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(rgba(241,243,241,0.06) 1px, transparent 1px) 0 0/100% 28px,
+      linear-gradient(90deg, rgba(241,243,241,0.06) 1px, transparent 1px) 0 0/28px 100%;
+  }
+  .hero-inner{
+    position:relative;
+    max-width:640px;
+    margin:0 auto;
+    text-align:center;
+  }
+  .scan-wrap{
+    position:relative;
+    width:150px;
+    height:150px;
+    margin:0 auto 28px;
+  }
+  .scan-wrap svg{width:100%;height:100%;display:block;}
+  .face-outline{
+    fill:none;
+    stroke:rgba(241,243,241,0.35);
+    stroke-width:1.4;
+  }
+  .scan-line{
+    stroke:var(--accent);
+    stroke-width:1.6;
+    filter:drop-shadow(0 0 6px rgba(47,182,166,0.9));
+    animation:sweep 3.2s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{transform:translateY(-56px);opacity:0;}
+    12%{opacity:1;}
+    50%{transform:translateY(56px);opacity:1;}
+    88%{opacity:1;}
+    100%{transform:translateY(-56px);opacity:0;}
+  }
+  .node{fill:var(--accent);opacity:0.85;}
+  .hero h1{
+    color:var(--paper);
+    font-size:clamp(1.7rem,4vw,2.5rem);
+    font-weight:500;
+    line-height:1.18;
+    margin-top:14px;
+  }
+  .hero p{
+    color:#D7DEE8;
+    font-size:0.98rem;
+    line-height:1.6;
+    max-width:480px;
+    margin:16px auto 0;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .scan-line{animation:none; top:0; opacity:0.8;}
+  }
+
+  /* ---------- FORM SHELL ---------- */
+  .shell{max-width:640px;margin:0 auto;padding:0 24px 80px;}
+  .progress-track{
+    position:sticky; top:0; z-index:10;
+    height:3px; background:var(--line);
+    margin-top:-3px;
+  }
+  .progress-fill{
+    height:100%; width:0%; background:var(--accent);
+    transition:width 0.35s ease;
+  }
+  .notice{
+    position: relative;
+    z-index: 11;
+    margin-top:-28px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    font-size:0.88rem;
+    color:var(--ink-soft);
+    line-height:1.55;
+    box-shadow:0 8px 24px -16px rgba(18,35,63,0.25);
+  }
+  .notice strong{color:var(--ink);}
+
+  form{margin-top:32px;}
+  .q{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:28px 26px;
+    margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(18,35,63,0.04);
+    transition:border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .q:hover{
+    box-shadow:0 12px 28px -18px rgba(18,35,63,0.28);
+    transform:translateY(-1px);
+  }
+  .q.answered{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .q.answered:hover{transform:none;}
+  .q-header{
+    display:flex;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:18px;
+  }
+  .q-badge{
+    flex-shrink:0;
+    width:34px; height:34px;
+    border-radius:50%;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.9rem;
+    font-weight:500;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.2s ease;
+  }
+  .q.answered .q-badge{background:var(--accent);}
+  .q-header-text{flex:1; min-width:0;}
+  .q-header-text .eyebrow{display:block; margin-bottom:6px;}
+  .q-text{
+    font-family:'Fraunces',serif;
+    font-size:1.08rem;
+    font-weight:500;
+    line-height:1.42;
+    color:var(--ink);
+    margin:0;
+  }
+  .q-subtext{
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin:8px 0 0;
+    font-style:italic;
+  }
+  .options{display:flex;flex-direction:column;gap:9px; padding-left:50px;}
+  .opt{
+    display:flex;align-items:center;gap:12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 14px;
+    cursor:pointer;
+    font-size:0.92rem;
+    color:var(--ink-soft);
+    transition:border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  }
+  .opt:hover{border-color:var(--accent); transform:translateX(2px);}
+  .opt input{accent-color:var(--accent); width:16px; height:16px; flex-shrink:0;}
+  .opt:has(input:checked){
+    border-color:var(--accent);
+    background:var(--accent-soft);
+    color:var(--ink);
+    font-weight:500;
+  }
+  @media (max-width:480px){
+    .options{padding-left:0;}
+  }
+
+  .privacy-block{
+    background:#FBF1EF;
+    border:1px solid #EBC9C4;
+    border-radius:12px;
+    padding:20px 22px;
+    margin:28px 0 20px;
+  }
+  .privacy-block .eyebrow{color:var(--alert);}
+  .privacy-block p{font-size:0.88rem;color:var(--ink-soft);line-height:1.6;margin:8px 0 0;}
+  .consent-check{
+    display:flex; gap:10px; align-items:flex-start;
+    margin-top:14px; font-size:0.86rem; color:var(--ink-soft);
+  }
+  .consent-check input{margin-top:3px;accent-color:var(--alert);}
+
+  button[type="submit"]{
+    width:100%;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:9px;
+    padding:16px;
+    font-family:'Inter',sans-serif;
+    font-size:0.98rem;
+    font-weight:600;
+    letter-spacing:0.01em;
+    cursor:pointer;
+    transition:background 0.15s ease, transform 0.1s ease;
+  }
+  button[type="submit"]:hover{background:#1C3358;}
+  button[type="submit"]:active{transform:scale(0.99);}
+  button[type="submit"]:disabled{opacity:0.5; cursor:not-allowed;}
+
+  .status{
+    margin-top:14px;
+    font-size:0.86rem;
+    text-align:center;
+    min-height:20px;
+  }
+  .status.error{color:var(--alert);}
+  .status.ok{color:var(--accent);}
+
+  .done{
+    display:none;
+    background:var(--paper-raised);
+    border:1px solid var(--accent);
+    border-radius:12px;
+    padding:40px 28px;
+    text-align:center;
+    margin-top:32px;
+  }
+  .done.show{display:block;}
+  .done h2{font-size:1.3rem;color:var(--ink);}
+  .done p{color:var(--ink-soft);font-size:0.92rem;line-height:1.6;margin-top:10px;}
+  form.hide{display:none;}
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed;
+    top:20px; left:50%;
+    transform:translateX(-50%) translateY(-16px);
+    z-index:100;
+    display:flex; align-items:center; gap:12px;
+    max-width:min(420px, calc(100vw - 32px));
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:11px;
+    padding:14px 18px;
+    box-shadow:0 16px 32px -12px rgba(18,35,63,0.45);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease, transform 0.25s ease;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .toast-icon{
+    flex-shrink:0;
+    width:26px; height:26px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .toast.success .toast-icon{background:var(--accent);}
+  .toast.error .toast-icon{background:var(--alert);}
+  .toast-icon svg{width:14px;height:14px;}
+  .toast-text{font-size:0.9rem; line-height:1.45;}
+  .toast-text strong{display:block; font-weight:600; margin-bottom:2px;}
+  @media (max-width:480px){
+    .toast{top:12px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span class="toast-text" id="toastText"></span>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="scan-wrap">
+      <svg viewBox="0 0 150 150">
+        <clipPath id="faceClip"><circle cx="75" cy="75" r="52"/></clipPath>
+        <path class="face-outline" d="M75 24 C102 24 122 46 122 75 C122 106 100 126 75 126 C50 126 28 106 28 75 C28 46 48 24 75 24 Z"/>
+        <circle class="node" cx="58" cy="66" r="2.3"/>
+        <circle class="node" cx="92" cy="66" r="2.3"/>
+        <path class="face-outline" d="M75 68 L75 88 L67 92"/>
+        <path class="face-outline" d="M56 104 C63 112 87 112 94 104"/>
+        <g clip-path="url(#faceClip)">
+          <line class="scan-line" x1="23" y1="75" x2="127" y2="75"/>
+        </g>
+      </svg>
+    </div>
+    <p class="eyebrow">University Research Study</p>
+    <h1>Facial Recognition for Campus Attendance</h1>
+    <p>A short, anonymous survey on student and community attitudes toward using facial recognition to record class attendance. It takes about two minutes and your responses directly inform this research.</p>
+  </div>
+</div>
+
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="shell">
+  <div class="notice">
+    <strong>Anonymous &amp; voluntary.</strong> No names, photos, or biometric data are collected here — only your opinions. Responses are stored securely for academic research purposes only.
+  </div>
+
+  <form id="surveyForm" novalidate>
+    <div class="q" data-q="familiarity">
+      <div class="q-header">
+        <span class="q-badge">1</span>
+        <div class="q-header-text">
+          <span class="eyebrow">Question 1 of 4</span>
+          <p class="q-text">Are you familiar with how facial recognition technology works?</p>
+        </div>
+      </div>
+      <div class="options" role="radiogroup" aria-label="Are you familiar with how facial recognition technology works?">
+        <label class="opt"><input type="radio" name="familiarity" value="Yes" required><span>Yes</span></label>
+        <label class="opt"><input type="radio" name="familiarity" value="No"><span>No</span></label>
+      </div>
+    </div>
+
+    <div class="q" data-q="support">
+      <div class="q-header">
+        <span class="q-badge">2</span>
+        <div class="q-header-text">
+          <span class="eyebrow">Question 2 of 4</span>
+          <p class="q-text">Do you support the university implementing a facial recognition system to record student attendance?</p>
+        </div>
+      </div>
+      <div class="options" role="radiogroup" aria-label="Do you support the university implementing a facial recognition system to record student attendance?">
+        <label class="opt"><input type="radio" name="support" value="Yes" required><span>Yes</span></label>
+        <label class="opt"><input type="radio" name="support" value="No"><span>No</span></label>
+      </div>
+    </div>
+
+    <div class="q" data-q="privacyConcern">
+      <div class="q-header">
+        <span class="q-badge">3</span>
+        <div class="q-header-text">
+          <span class="eyebrow">Question 3 of 4</span>
+          <p class="q-text">"The use of facial recognition technology for attendance raises significant privacy concerns regarding how my biometric data is collected and stored."</p>
+          <p class="q-subtext">Please rate your level of agreement.</p>
+        </div>
+      </div>
+      <div class="options" role="radiogroup" aria-label="Privacy concern agreement level">
+        <label class="opt"><input type="radio" name="privacyConcern" value="Strongly Agree" required><span>Strongly Agree</span></label>
+        <label class="opt"><input type="radio" name="privacyConcern" value="Agree"><span>Agree</span></label>
+        <label class="opt"><input type="radio" name="privacyConcern" value="Neutral"><span>Neutral</span></label>
+        <label class="opt"><input type="radio" name="privacyConcern" value="Disagree"><span>Disagree</span></label>
+        <label class="opt"><input type="radio" name="privacyConcern" value="Strongly Disagree"><span>Strongly Disagree</span></label>
+      </div>
+    </div>
+
+    <div class="q" data-q="consent">
+      <div class="q-header">
+        <span class="q-badge">4</span>
+        <div class="q-header-text">
+          <span class="eyebrow">Question 4 of 4</span>
+          <p class="q-text">Do you believe universities should be required to obtain explicit consent from students before using their facial data?</p>
+        </div>
+      </div>
+      <div class="options" role="radiogroup" aria-label="Do you believe universities should be required to obtain explicit consent from students before using their facial data?">
+        <label class="opt"><input type="radio" name="consent" value="Yes" required><span>Yes</span></label>
+        <label class="opt"><input type="radio" name="consent" value="No"><span>No</span></label>
+      </div>
+    </div>
+
+    <div class="privacy-block">
+      <span class="eyebrow">Before you submit</span>
+      <p>Your answers will be stored anonymously in a research database and used only for the purposes of this university study. No identifying information is requested or recorded.</p>
+      <label class="consent-check">
+        <input type="checkbox" id="agreeCheck" required>
+        I understand my anonymous responses will be used for this research study.
+      </label>
+    </div>
+
+    <button type="submit" id="submitBtn">Submit response</button>
+    <div class="status" id="statusMsg"></div>
+  </form>
+
+  <div class="done" id="doneMsg">
+    <h2>Thank you.</h2>
+    <p>Your response has been recorded. It contributes directly to this university's research on facial recognition and student privacy.</p>
+  </div>
+</div>
+
+<script type="module">
+  const firebaseConfig = {
+    apiKey: "AIzaSyAQU86YYXLQsLQjxXR5I3mT9kko-qrVpPQ",
+    authDomain: "ndsem-research.firebaseapp.com",
+    projectId: "ndsem-research",
+    storageBucket: "ndsem-research.firebasestorage.app",
+    messagingSenderId: "398519261597",
+    appId: "1:398519261597:web:d5a9aa8d11e28b9e313774",
+    measurementId: "G-TP2TTYGY8H"
+  };
+
+  const form = document.getElementById('surveyForm');
+  const progressFill = document.getElementById('progressFill');
+  const statusMsg = document.getElementById('statusMsg');
+  const submitBtn = document.getElementById('submitBtn');
+  const doneMsg = document.getElementById('doneMsg');
+  const toast = document.getElementById('toast');
+  const toastIcon = document.getElementById('toastIcon');
+  const toastText = document.getElementById('toastText');
+  const questionNames = ['familiarity','support','privacyConcern','consent'];
+
+  const ICONS = {
+    success: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+
+  let toastTimer = null;
+  function showToast(type, title, message){
+    clearTimeout(toastTimer);
+    toast.className = 'toast ' + type;
+    toastIcon.innerHTML = ICONS[type];
+    toastText.innerHTML = `<strong>${title}</strong>${message}`;
+    requestAnimationFrame(() => toast.classList.add('show'));
+    toastTimer = setTimeout(() => toast.classList.remove('show'), type === 'success' ? 4500 : 6000);
+  }
+
+  function updateProgress(){
+    let answered = 0;
+    questionNames.forEach(name => {
+      const checked = form.querySelector(`input[name="${name}"]:checked`);
+      const qBlock = form.querySelector(`.q[data-q="${name}"]`);
+      if(checked){
+        answered++;
+        qBlock.classList.add('answered');
+      } else {
+        qBlock.classList.remove('answered');
+      }
+    });
+    progressFill.style.width = (answered / questionNames.length * 100) + '%';
+  }
+
+  form.addEventListener('change', updateProgress);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusMsg.textContent = '';
+    statusMsg.className = 'status';
+
+    const data = {};
+    for(const name of questionNames){
+      const checked = form.querySelector(`input[name="${name}"]:checked`);
+      if(!checked){
+        statusMsg.textContent = 'Please answer every question before submitting.';
+        statusMsg.className = 'status error';
+        showToast('error', 'Missing an answer', 'Please answer every question before submitting.');
+        return;
+      }
+      data[name] = checked.value;
+    }
+    if(!document.getElementById('agreeCheck').checked){
+      statusMsg.textContent = 'Please confirm you understand how your response will be used.';
+      statusMsg.className = 'status error';
+      showToast('error', 'Consent required', 'Please confirm the checkbox above before submitting.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    try {
+      // Dynamically import Firebase to ensure the submit listener works even if offline
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+      const { getFirestore, collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      await addDoc(collection(db, 'responses'), {
+        familiarity: data.familiarity,
+        support: data.support,
+        privacyConcern: data.privacyConcern,
+        consent: data.consent,
+        submittedAt: serverTimestamp()
+      });
+      form.classList.add('hide');
+      doneMsg.classList.add('show');
+      progressFill.style.width = '100%';
+      showToast('success', 'Response submitted', 'Thanks — your answers were saved successfully.');
+    } catch(err){
+      console.error(err);
+      statusMsg.textContent = 'Something went wrong submitting your response. Please check your connection and try again.';
+      statusMsg.className = 'status error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit response';
+      showToast('error', 'Submission failed', 'We couldn\'t save your response. Please try again.');
+    }
+  });
+</script>
+
+</body>
+</html>
